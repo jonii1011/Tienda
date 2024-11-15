@@ -12,12 +12,14 @@ class Cliente(models.Model):
     contraseña = models.CharField(max_length=128)
 
     def save(self, *args, **kwargs):
-        if not self.pk:  # Solo hashear si es un nuevo cliente
+        # Solo hashear si la contraseña no está ya hasheada
+        if not self.pk or not check_password(self.contraseña, self.contraseña):
             self.contraseña = make_password(self.contraseña)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
+
 
 class FormaDePago(models.Model):
     id = models.AutoField(primary_key=True)
@@ -50,7 +52,7 @@ class Producto(models.Model):
     stock = models.IntegerField()
     descripcion = models.TextField()
     tipo_producto = models.ForeignKey('TipoProducto', on_delete=models.CASCADE)
-    modelo = models.ForeignKey('Modelo', on_delete=models.CASCADE)
+    modelo = models.ForeignKey('Modelo', on_delete=models.CASCADE, null=True, blank=True)
     imagen = models.ImageField(upload_to='productos/', null=True, blank=True)  # Campo para la imagen
 
     def __str__(self):
@@ -59,7 +61,7 @@ class Producto(models.Model):
 class Modelo(models.Model):
     id_modelo = models.AutoField(primary_key=True)
     nombre_modelo = models.CharField(max_length=100)
-    version = models.CharField(max_length=50)
+    version = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
         return f"{self.nombre_modelo} - {self.version}"

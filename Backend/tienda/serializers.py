@@ -6,11 +6,6 @@ class ClienteSerializer(serializers.ModelSerializer):
         model = Cliente
         fields = '__all__'
 
-class ProductoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Producto
-        fields = '__all__'
-
 class TipoProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoProducto
@@ -21,6 +16,26 @@ class ModeloSerializer(serializers.ModelSerializer):
         model = Modelo
         fields = '__all__' 
 
+
+class ProductoSerializer(serializers.ModelSerializer):
+    modelo_detalle = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Producto
+        fields = '__all__'  # Asegúrate de incluir los campos que necesitas
+        extra_kwargs = {
+            'modelo': {'required': False},  # Asegúrate de que sea opcional
+        }
+
+    def get_modelo_detalle(self, obj):
+        # Obtiene el modelo relacionado
+        if obj.modelo:  # Verifica si el modelo existe
+            return {
+                "nombre_modelo": obj.modelo.nombre_modelo,
+                "version": obj.modelo.version
+            }
+        return None  # Retorna None si no hay modelo relacionado
+        
 class VentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venta

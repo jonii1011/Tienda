@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from django.conf import settings
+from django.conf.urls.static import static
 
 from tienda.views import (
     ClienteViewSet,
@@ -12,7 +14,8 @@ from tienda.views import (
     DetalleCarritoViewSet,
     AdministradorViewSet,
     TipoProductoViewSet,
-    ModeloViewSet
+    ModeloViewSet,
+    login_view
 )
 
 router = DefaultRouter()
@@ -31,7 +34,10 @@ router.register(r'modelo', ModeloViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', login_view, name='login'),
     path('', include(router.urls)),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
