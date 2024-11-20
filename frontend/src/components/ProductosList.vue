@@ -2,13 +2,29 @@
   <v-app>
     <v-app-bar app color="grey" dark>
       <div style="display: flex; align-items: center; margin: 0;">
+        <h3>IMPORT TDF</h3>
         <v-img src="@/assets/file.png" alt="Logo" class="logo" contain></v-img>
       </div>
       <v-spacer></v-spacer>
-      <v-btn text><router-link to="/" class="menu">Inicio</router-link></v-btn>
-      <v-btn text><router-link to="/productos/lista" class="menu">Productos</router-link></v-btn>
-      <v-btn text><router-link to="/contacto" class="menu">Contacto</router-link></v-btn>
-      <v-btn color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
+      <v-btn text @click="inicio" class="menu">Inicio</v-btn>
+      <v-btn text @click="contacto" class="menu">Contacto</v-btn>
+      <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
+      <v-menu v-else>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn color="black" v-bind="attrs" v-on="on">{{ nombreUsuario }}</v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="verPerfil">
+            <v-list-item-title>Mi Perfil</v-list-item-title>
+          </v-list-item>
+            <v-list-item v-if="isAuthenticated && isAdmin" @click="agregarProducto">
+            <v-list-item-title>Agregar Productos</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="cerrarSesion">
+            <v-list-item-title>Cerrar Sesión</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <v-container class="mt-15 mb-50">
@@ -60,16 +76,26 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <v-footer app>
+      <v-container>
+        <v-row>
+          <v-col class="text-center">
+            <p>&copy; 2024 Import TDF. Todos los derechos reservados.</p>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-footer>
   </v-app>
 </template>
 
 <script>
-import axios from 'axios'; 
+import axios from 'axios';
+
 export default {
   data() {
     return {
       productos: [],
-      filtroNombre: '',
       filtroModelo: null,
       filtroTipo: null,
       filtroPrecio: null,
@@ -87,37 +113,37 @@ export default {
     };
   },
   created() {
-    this.fetchProductos();
+    this.fetchProductos(); // Llama a la función para cargar productos
   },
   computed: {
+    isAuthenticated() {
+      return this.$store.getters.isAuthenticated;
+    },
+    isAdmin() {
+      return this.$store.getters.userRole === 'administrador';
+    },
+    nombreUsuario() {
+      return this.$store.getters.nombreUsuario;
+    },
     productosFiltrados() {
-  // Filtra la lista de productos según varios criterios
-  return this.productos.filter((producto) => {
-    // Verifica si el nombre del producto incluye el texto del filtro (insensible a mayúsculas)
-    const cumpleNombre = producto.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase());
+      return this.productos.filter((producto) => {
+        const cumpleModelo = this.filtroModelo ? 
+          (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
+          true;
 
-    // Verifica si hay un filtro de modelo y si el modelo del producto coincide
-    const cumpleModelo = this.filtroModelo ? 
-      (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
-      true; // Si no hay filtro, se considera que cumple
+        const cumpleTipo = this.filtroTipo ? 
+          producto.tipo_producto === this.filtroTipo : 
+          true;
 
-    // Verifica si hay un filtro de tipo y si el tipo del producto coincide
-    const cumpleTipo = this.filtroTipo ? 
-      producto.tipo_producto === this.filtroTipo : 
-      true; // Si no hay filtro, se considera que cumple
+        const cumplePrecio = this.filtroPrecio ? (
+          Array.isArray(this.filtroPrecio) ?
+            (producto.precio >= this.filtroPrecio[0] && producto.precio <= this.filtroPrecio[1]) :
+            (producto.precio < this.filtroPrecio)
+        ) : true;
 
-    // Verifica si hay un filtro de precio
-    const cumplePrecio = this.filtroPrecio ? (
-      // Si el filtro de precio es un rango (array)
-      Array.isArray(this.filtroPrecio) ?
-        (producto.precio >= this.filtroPrecio[0] && producto.precio <= this.filtroPrecio[1]) : // Comprueba si el precio está dentro del rango
-        (producto.precio < this.filtroPrecio) // Comprueba si el precio es menor que el valor del filtro
-    ) : true; // Si no hay filtro, se considera que cumple
-
-    // Retorna verdadero solo si el producto cumple con todos los filtros
-    return cumpleNombre && cumpleModelo && cumpleTipo && cumplePrecio;
-  });
-}
+        return cumpleModelo && cumpleTipo && cumplePrecio;
+      });
+    },
   },
   methods: {
     fetchProductos() {
@@ -126,10 +152,9 @@ export default {
           this.productos = response.data;
           this.errorMessage = null;
 
-          // Extraer modelos únicos para el filtro y evitar null
           this.modelosOpciones = [...new Set(this.productos
             .map(producto => producto.modelo_detalle ? producto.modelo_detalle.nombre_modelo : null)
-            .filter(modelo => modelo !== null) // Filtrar valores null
+            .filter(modelo => modelo !== null)
           )].map(modelo => ({ text: modelo, value: modelo }));
         })
         .catch(error => {
@@ -138,14 +163,38 @@ export default {
         });
     },
     agregarAlCarrito(producto) {
-      console.log('Agregado al carrito:', producto);
+      if (this.isAuthenticated) {
+        console.log(`Agregado al carrito: ${producto.nombre}`);
+      } else {
+        alert('Debes iniciar sesión para agregar productos al carrito.');
+      }
     },
-  },
+    iniciarSesion() {
+      this.$router.push('/login');
+    },
+    cerrarSesion() {
+      this.$store.dispatch('logout');
+      this.$router.push('/');
+    },
+    verPerfil(){
+
+    },
+    contacto() {
+      this.$router.push('/contacto'); // Redirige a la página de contacto
+    },
+    agregarProducto() {
+      this.$router.push('/GestionProductos'); // Redirige a la página para agregar productos
+    },
+    inicio(){
+      this.$router.push('/');
+    }
+  }
 };
 </script>
 
 <style scoped>
 .logo {
+  position: absolute;
   height: 55px;
   margin: 0;
   padding: 0;

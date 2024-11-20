@@ -2,20 +2,33 @@
   <v-app>
     <v-app-bar app color="grey" dark>
       <div style="display: flex; align-items: center; margin: 0;">
+        <h3>IMPORT TDF</h3>
         <v-img src="@/assets/file.png" alt="Logo" class="logo" contain></v-img>
       </div>
       <v-spacer></v-spacer>
-      <v-btn text><router-link to="/productos/lista" class="menu">Productos</router-link></v-btn>
-      <v-btn text><router-link to="/productos/lista" class="menu">Contacto</router-link></v-btn>
-      <v-btn color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
+      <v-btn text @click="verProductos" class="menu">Productos</v-btn>
+      <v-btn text @click="contacto" class="menu">Contacto</v-btn>
+      <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
+      <v-menu v-else>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn v-bind="attrs" v-on="on">{{ nombreUsuario }}</v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="verPerfil">
+            <v-list-item-title>Mi Perfil</v-list-item-title>
+          </v-list-item>
+          <v-list-item v-if="userRole === 'administrador'" @click="agregarProducto">
+            <v-list-item-title>Agregar Productos</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="cerrarSesion">
+            <v-list-item-title>Cerrar Sesión</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <div class="image-container">
-      <v-img
-        src="@/assets/IPHONES.jpeg"
-        height="400"
-        class="d-flex align-center"
-      >
+      <v-img src="@/assets/IPHONES.jpeg" height="400" class="d-flex align-center" alt="Imagen de iPhones">
         <v-container>
           <v-row>
             <v-col class="text-center">
@@ -31,10 +44,13 @@
     <v-container>
       <h2><center>PRODUCTOS DESTACADOS</center></h2>
       <br>
+      <v-alert v-if="errorLoading" type="error">
+        No se pudieron cargar los productos. Intenta nuevamente más tarde.
+      </v-alert>
       <v-row>
         <v-col v-for="producto in productos.slice(0, 3)" :key="producto.id_producto" cols="12" sm="6" md="4">
           <v-card>
-            <v-img :src="producto.imagen" height="200px" contain></v-img>
+            <v-img :src="producto.imagen" height="200px" contain alt="Imagen del producto"></v-img>
             <div class="text-center">
               <v-card-subtitle class="product-title">
                 {{ producto.nombre }}
@@ -46,7 +62,8 @@
               <span class="price">${{ producto.precio }}</span>
             </div>
             <v-card-actions class="justify-center">
-              <v-btn color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
+              <v-btn v-if="isAuthenticated" color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
+              <v-btn v-else color="grey" @click="iniciarSesion">Iniciar Sesión para Agregar</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -66,45 +83,152 @@
 </template>
 
 <script>
-import axios from 'axios'; 
+import { mapGetters } from 'vuex';
+import axios from 'axios';
+
 export default {
-  name: 'HomeView',
   data() {
     return {
       productos: [],
+      errorLoading: false,
     };
   },
+  computed: {
+    ...mapGetters(['isAuthenticated', 'nombreUsuario', 'userRole']),
+  },
+  watch: {
+    nombreUsuario(newVal) {
+      if (newVal) {
+        console.log('Nombre de usuario actualizado:', newVal);
+      }
+    },
+  },
   created() {
-    this.fetchProductos();
+    if (!this.isAuthenticated) {
+      this.$store.commit('loadAuthState');
+    }
+    this.fetchProductos(); // Llama a la función para cargar productos
   },
   methods: {
-    fetchProductos() {
-      axios.get('http://127.0.0.1:8000/productos/')
-        .then(response => {
-          this.productos = response.data;
-          this.errorMessage = null;
-        })
-        .catch(error => {
-          this.errorMessage = 'Error al cargar los productos';
-          console.error(error);
-        });
-    },
-    verProductos() {
-      this.$router.push('/productos/lista');
-    },
-    agregarAlCarrito(product) {
-      console.log(`Agregado al carrito: ${product.name}`);
+    async fetchProductos() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/productos/');
+        this.productos = response.data;
+      } catch (error) {
+        console.error('Error al cargar los productos', error);
+        this.errorLoading = true; // Muestra el mensaje de error
+      }
     },
     iniciarSesion() {
-      this.$router.push('/login');
+      this.$router.push('/login'); // Redirige a la página de inicio de sesión
     },
-  },
+    verPerfil() {
+      this.$router.push('/perfil'); // Redirige a la página del perfil
+    },
+    agregarAlCarrito(producto) {
+      if (this.isAuthenticated) {
+        console.log(`Agregado al carrito: ${producto.nombre}`);
+        // Lógica para agregar al carrito
+      } else {
+        alert('Debes iniciar sesión para agregar productos al carrito.');
+      }
+    },
+    cerrarSesion() {
+      this.$store.dispatch('logout'); // Llama a la acción de logout de Vuex
+      this.$router.push('/login'); // Redirige a la página de inicio de sesión
+    },
+    verProductos() {
+      this.$router.push('/productos/lista'); // Redirige a la página de productos
+    },
+    contacto() {
+      this.$router.push('/contacto'); // Redirige a la página de contacto
+    },
+    agregarProducto() {
+      this.$router.push('/GestionProductos'); // Redirige a la página de gestión de productos
+    }
+  }
 };
 </script>
 
 
 <style scoped>
+.image-container {
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+</style>
+
+
+<style scoped>
 .logo {
+  height: 40px;
+  margin-left: 10px;
+}
+.image-container {
+  position: relative;
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.product-title {
+  font-weight: bold;
+}
+.price {
+  font-size: 1.2em;
+  color: #ff5722;
+}
+</style>
+
+
+
+
+
+
+<style scoped>
+.v-card {
+  max-width: 400px;
+  margin: auto;
+}
+.logo {
+  position: absolute;
+  height: 55px;
+  margin: 0;
+  padding: 0;
+}
+.menu {
+  text-decoration: none;
+  color: white;
+}
+.image-container {
+  position: relative;
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+</style>
+
+
+<style scoped>
+.logo {
+  position: absolute;
   height: 55px;
   margin: 0;
   padding: 0;
@@ -154,11 +278,12 @@ export default {
   width: 100%; /* Asegura que ocupe todo el ancho */
 }
 
-.menu{
+.menu {
   text-decoration: none;
   color: white;
 }
 </style>
+
 
 
 

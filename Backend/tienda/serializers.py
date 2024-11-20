@@ -1,10 +1,33 @@
 from rest_framework import serializers
-from .models import Cliente, Producto, Modelo, Venta, TipoProducto, DetalleVenta, FormaDePago, Carrito, DetalleCarrito, Administrador
+from .models import Usuario, Producto, Modelo, Venta, TipoProducto, DetalleVenta, FormaDePago, Carrito, DetalleCarrito
 
-class ClienteSerializer(serializers.ModelSerializer):
+class UsuarioSerializer(serializers.ModelSerializer):
+    contraseña = serializers.CharField(write_only=True, required=True)
+
     class Meta:
-        model = Cliente
-        fields = '__all__'
+        model = Usuario
+        fields = ['id', 'dni', 'nombre', 'apellido', 'fecha_de_nacimiento', 
+                  'direccion', 'telefono', 'email', 'rol', 'is_active', 'is_staff', 'contraseña']
+        read_only_fields = ['id', 'fecha_creacion']
+
+    def create(self, validated_data):
+        # Extraer la contraseña del diccionario validado
+        contraseña = validated_data.pop('contraseña', None)
+        user = Usuario(**validated_data)
+        if contraseña is not None:
+            user.set_password(contraseña)
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        # Permitir la actualización de los campos, excepto la contraseña
+        contraseña = validated_data.pop('contraseña', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if contraseña is not None:
+            instance.set_password(contraseña)
+        instance.save()
+        return instance
 
 class TipoProductoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,7 +84,3 @@ class DetalleCarritoSerializer(serializers.ModelSerializer):
         model = DetalleCarrito
         fields = '__all__'
 
-class AdministradorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Administrador
-        fields = '__all__'
