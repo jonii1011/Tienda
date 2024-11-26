@@ -7,7 +7,7 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="inicio" class="menu">Inicio</v-btn>
-      <v-btn text @click="contacto" class="menu">Contacto</v-btn>
+      <v-btn text v-if="!isAdmin" @click="contacto" class="menu">Contacto</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
         <template v-slot:activator="{ on, attrs }">
@@ -17,7 +17,7 @@
           <v-list-item @click="verPerfil">
             <v-list-item-title>Mi Perfil</v-list-item-title>
           </v-list-item>
-            <v-list-item v-if="isAuthenticated && isAdmin" @click="agregarProducto">
+          <v-list-item v-if="isAuthenticated && isAdmin" @click="agregarProducto">
             <v-list-item-title>Agregar Productos</v-list-item-title>
           </v-list-item>
           <v-list-item @click="cerrarSesion">
@@ -56,6 +56,13 @@
       </v-row>
 
       <v-row>
+        <v-col cols="12" class="text-center">
+          <v-btn text @click="ordenarProductos('asc')" class="mr-2">Ordenar de Menor a Mayor</v-btn>
+          <v-btn text @click="ordenarProductos('desc')">Ordenar de Mayor a Menor</v-btn>
+        </v-col>
+      </v-row>
+
+      <v-row>
         <v-col v-for="producto in productosFiltrados" :key="producto.id_producto" cols="12" sm="6" md="4">
           <v-card>
             <v-img :src="producto.imagen" height="200px" contain></v-img>
@@ -70,7 +77,9 @@
               <span class="price">${{ producto.precio }}</span>
             </div>
             <v-card-actions class="justify-center">
-              <v-btn color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
+              <v-btn v-if="!isAdmin" color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
+              <v-btn v-if="isAdmin" color="grey" @click="editarProducto(producto)">Editar</v-btn>
+              <v-btn v-if="isAdmin" color="red" @click="eliminarProducto(producto)">Eliminar</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -99,6 +108,7 @@ export default {
       filtroModelo: null,
       filtroTipo: null,
       filtroPrecio: null,
+      orden: null, // 'asc' o 'desc'
       precioOpciones: [
         { text: 'Todos', value: null },
         { text: 'Menos de 800', value: 800 },
@@ -125,27 +135,40 @@ export default {
     nombreUsuario() {
       return this.$store.getters.nombreUsuario;
     },
-    productosFiltrados() {
-      return this.productos.filter((producto) => {
-        const cumpleModelo = this.filtroModelo ? 
-          (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
-          true;
-
-        const cumpleTipo = this.filtroTipo ? 
-          producto.tipo_producto === this.filtroTipo : 
-          true;
-
-        const cumplePrecio = this.filtroPrecio ? (
-          Array.isArray(this.filtroPrecio) ?
-            (producto.precio >= this.filtroPrecio[0] && producto.precio <= this.filtroPrecio[1]) :
-            (producto.precio < this.filtroPrecio)
-        ) : true;
-
-        return cumpleModelo && cumpleTipo && cumplePrecio;
-      });
+    userId() {
+      return this.$store.getters.userId;
     },
-  },
+    productosFiltrados() {
+        return this.productos.filter((producto) => {
+          const cumpleModelo = this.filtroModelo ? 
+            (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
+            true;
+
+          const cumpleTipo = this.filtroTipo ? 
+            producto.tipo_producto === this.filtroTipo : 
+            true;
+
+          const cumplePrecio = this.filtroPrecio ? (
+            Array.isArray(this.filtroPrecio) ?
+              (producto.precio >= this.filtroPrecio[0] && producto.precio <= this.filtroPrecio[1]) :
+              (producto.precio < this.filtroPrecio)
+          ) : true;
+
+          return cumpleModelo && cumpleTipo && cumplePrecio;
+        }).sort((a, b) => {
+          if (this.orden === 'asc') {
+            return a.precio - b.precio;
+          } else if (this.orden === 'desc') {
+            return b.precio - a.precio;
+          }
+          return 0;
+        });
+      },
+    },
   methods: {
+    ordenarProductos(orden) {
+      this.orden = orden;
+    },
     fetchProductos() {
       axios.get('http://127.0.0.1:8000/productos/')
         .then(response => {
@@ -169,6 +192,9 @@ export default {
         alert('Debes iniciar sesión para agregar productos al carrito.');
       }
     },
+    inicio() {
+      this.$router.push('/');
+    },
     iniciarSesion() {
       this.$router.push('/login');
     },
@@ -176,8 +202,8 @@ export default {
       this.$store.dispatch('logout');
       this.$router.push('/');
     },
-    verPerfil(){
-
+    verPerfil() {
+      this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
     contacto() {
       this.$router.push('/contacto'); // Redirige a la página de contacto
@@ -185,12 +211,37 @@ export default {
     agregarProducto() {
       this.$router.push('/GestionProductos'); // Redirige a la página para agregar productos
     },
-    inicio(){
-      this.$router.push('/');
-    }
-  }
+    editarProducto(producto) {
+    this.$router.push({ 
+      name: 'GestionProductos', 
+      params: { 
+        modo: 'editar', 
+        id_producto: producto.id_producto,
+        id_tipo_producto: producto.tipo_producto ? producto.tipo_producto.id_tipo_producto : null,
+        id_modelo: producto.modelo ? producto.modelo.id_modelo : null
+      } 
+    });
+    },
+    eliminarProducto(producto) {
+      // Confirmar eliminación del producto
+      if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+        axios.delete(`http://localhost:8000/productos/${producto.id_producto}/`)
+          .then(() => {
+            // Actualiza la lista de productos después de eliminar
+            this.fetchProductos();
+            alert("Producto eliminado exitosamente."); // Mensaje de éxito
+          })
+          .catch(error => {
+            this.errorMessage = "Hubo un error al eliminar el producto.";
+            console.error(error);
+          });
+      }
+    },
+  },
 };
 </script>
+
+
 
 <style scoped>
 .logo {

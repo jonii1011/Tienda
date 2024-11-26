@@ -7,7 +7,6 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="inicio" class="menu">Inicio</v-btn>
-      <v-btn text @click="contacto" class="menu">Contacto</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
         <template v-slot:activator="{ on, attrs }">
@@ -24,8 +23,8 @@
       </v-menu>
     </v-app-bar>
 
-    <v-container>
-      <v-container v-if="isAdmin" class="mt-5" style="margin-top: 70px;">
+    <v-container style="margin-top: 80px;">
+      <v-container v-if="isAdmin" class="mt-5">
         <v-card>
           <v-card-title>
             <span class="headline">{{ modo === 'editar' ? 'Editar Producto' : 'Agregar Producto' }}</span>
@@ -87,9 +86,9 @@
                     v-model="producto.imagen"
                     :rules="[v => !!v || 'Imagen es requerida']"
                     outlined
-                    required
                     color="primary"
                   ></v-file-input>
+                  <img v-if="imagenUrl" :src="imagenUrl" alt="Imagen del producto" style="max-width: 100px; margin-top: 10px;" />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-select
@@ -131,6 +130,15 @@
         </v-card>
       </v-container>
     </v-container>
+    <v-footer app>
+  <v-container>
+    <v-row>
+      <v-col class="text-center">
+        <p>&copy; 2024 Import TDF. Todos los derechos reservados.</p>
+      </v-col>
+    </v-row>
+  </v-container>
+  </v-footer>
   </v-app>
 </template>
 
@@ -146,13 +154,14 @@ export default {
         precio: '',
         stock: '',
         descripcion: '',
-        imagen: null,
+        imagen: null, // Para el file input
       },
       tipo_producto_id: null,
       id_modelo: null,
       valid: false,
       tiposProducto: [],
       modelos: [],
+      imagenUrl: '', // Propiedad para la URL de la imagen
     };
   },
   created() {
@@ -161,9 +170,11 @@ export default {
     this.cargarModelos();
 
     if (this.modo === 'editar') {
-      this.producto = this.$route.params.producto;
-      this.tipo_producto_id = this.producto.tipo_producto.id_tipo_producto;
-      this.id_modelo = this.producto.modelo.id_modelo;
+      const id_producto = this.$route.params.id_producto;
+      this.tipo_producto_id = this.$route.params.id_tipo_producto; // Accede al ID del tipo de producto
+      this.id_modelo = this.$route.params.id_modelo; // Accede al ID del modelo
+
+      this.cargarProducto(id_producto); // Cargar el producto por ID
     }
   },
   computed: {
@@ -184,6 +195,26 @@ export default {
     }
   },
   methods: {
+    cargarProducto(id) {
+      axios.get(`http://127.0.0.1:8000/productos/${id}/`)
+        .then(response => {
+          console.log('Producto cargado:', response.data);
+          this.producto = {
+            nombre: response.data.nombre,
+            precio: response.data.precio,
+            stock: response.data.stock,
+            descripcion: response.data.descripcion,
+            imagen: null, // Para el file input
+          };
+          this.tipo_producto_id = response.data.tipo_producto; // Asignar directamente el ID
+          this.id_modelo = response.data.modelo; // Asignar directamente el ID
+          this.imagenUrl = response.data.imagen; // Guardar la URL de la imagen existente
+        })
+        .catch(error => {
+          console.error('Error al cargar el producto:', error);
+          alert('Error al cargar el producto. Por favor, intenta nuevamente.');
+        });
+    },
     verificarRol() {
       console.log('User Role:', this.$store.getters.userRole);
     },
@@ -215,42 +246,48 @@ export default {
       formData.append('precio', this.producto.precio);
       formData.append('stock', this.producto.stock);
       formData.append('descripcion', this.producto.descripcion);
-      formData.append('imagen', this.producto.imagen);
+      
+      // Solo agregar la imagen si se ha seleccionado una nueva
+      if (this.producto.imagen) {
+        formData.append('imagen', this.producto.imagen);
+      }
+
       formData.append('tipo_producto', this.tipo_producto_id);
       formData.append('modelo', this.id_modelo);
 
-      console.log('Producto a guardar:', formData);
+      const url = this.modo === 'editar' 
+        ? `http://127.0.0.1:8000/productos/${this.$route.params.id_producto}/` 
+        : 'http://127.0.0.1:8000/productos/';
 
-      axios.post('http://127.0.0.1:8000/productos/', formData, {
-          headers: {
+      const method = this.modo === 'editar' ? 'put' : 'post';
+
+      axios({
+        method: method,
+        url: url,
+        data: formData,
+        headers: {
           'Content-Type': 'multipart/form-data'
-          }
+        }
       })
       .then(response => {
-          console.log('Producto guardado exitosamente:', response.data);
-          this.$router.push('/productos/lista');
+        console.log('Producto guardado exitosamente:', response.data);
+        this.$router.push('/productos/lista');
       })
       .catch(error => {
-          if (error.response) {
-              console.log('tipo_producto_id:', this.tipo_producto_id);
-              console.log('id_modelo:', this.id_modelo);
-              console.error('Error al guardar el producto:', error.response.data);
-              alert(`Error al guardar el producto: ${JSON.stringify(error.response.data)}`);
-          } else if (error.request) {
-              console.error('No se recibió respuesta del servidor:', error.request);
-          } else {
-              console.error('Error al configurar la solicitud:', error.message);
-          }
+        if (error.response) {
+          console.error('Error al guardar el producto:', error.response.data);
+          alert(`Error al guardar el producto: ${JSON.stringify(error.response.data)}`);
+        } else if (error.request) {
+          console.error('No se recibió respuesta del servidor:', error.request);
+        } else {
+          console.error('Error al configurar la solicitud:', error.message);
+        }
       });
     },
     inicio() {
       this.$router.push('/');
     },
-    contacto() {
-      // Implementa la lógica para la sección de contacto
-    },
     iniciarSesion() {
-      // Aquí deberías redirigir al usuario al flujo de inicio de sesión real
       this.$store.dispatch('login', { userName: 'Nombre de Usuario', role: 'administrador' });
       this.$router.push('/gestionproductos');
     },
@@ -265,15 +302,12 @@ export default {
 };
 </script>
 
-
-  
-  
-  <style scoped>
-  .logo {
-    width: 50px; /* Ajusta según sea necesario */
-  }
-  .menu {
-    margin-left: 15px; /* Espaciado entre botones */
-  }
-  </style>
+<style scoped>
+.logo {
+  width: 50px; /* Ajusta según sea necesario */
+}
+.menu {
+  margin-left: 15px; /* Espaciado entre botones */
+}
+</style>
   

@@ -11,8 +11,10 @@
       <v-btn text @click="contacto" class="menu">Contacto</v-btn>
     </v-app-bar>
 
-    <v-card class="mx-auto" style="max-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); background-color: #f5f5f5;">
-      <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Registrar Cliente</v-card-title>
+    <v-card class="mx-auto" style="max-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); background-color: #f5f5f5; margin-top: 100px;">
+      <v-card-title class="headline text-center" style="font-weight: bold; color: black;">
+        {{ isEditing ? 'Editar Cliente' : 'Registrar Cliente' }}
+      </v-card-title>
       <v-card-text>
         <v-form ref="registerForm" v-model="valid">
           <v-text-field
@@ -90,21 +92,38 @@
             v-model="contraseña"
             label="Contraseña"
             :rules="[rules.required]"
-            type="password"
+            :type="showPassword ? 'text' : 'password'"
             required
             outlined
             dense
             class="my-2"
             color="grey"
-          ></v-text-field>
+          >
+            <template v-slot:append>
+              <v-btn icon @click="showPassword = !showPassword"> <!-- Botón para mostrar/ocultar -->
+                <v-icon>{{ showPassword ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
+              </v-btn>
+            </template>
+          </v-text-field>
         </v-form>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="grey darken-2" @click="registrarCliente" class="white--text">Registrar</v-btn>
+        <v-btn color="grey darken-2" @click="isEditing ? editarCliente() : registrarCliente()" class="white--text">
+          {{ isEditing ? 'Actualizar' : 'Registrar' }}
+      </v-btn>
         <v-spacer></v-spacer>
         <v-btn color="grey" @click="resetRegisterForm">Cancelar</v-btn>
       </v-card-actions>
     </v-card>
+    <v-footer app>
+      <v-container>
+        <v-row>
+          <v-col class="text-center">
+            <p>&copy; 2024 Import TDF. Todos los derechos reservados.</p>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-footer>
   </v-app>
 </template>
 
@@ -122,8 +141,9 @@ export default {
       telefono: '',
       email: '',
       contraseña: '',
+      showPassword: false, // Estado para controlar la visibilidad de la contraseña
       valid: false,
-      errorMessage: '',
+      isEditing: false,
       rules: {
         required: value => !!value || 'Este campo es requerido',
         email: value => /.+@.+\..+/.test(value) || 'Este debe ser un email válido'
@@ -132,22 +152,7 @@ export default {
   },
   methods: {
     registrarCliente() {
-      if (!this.dni || !this.nombre || !this.apellido || !this.fecha_de_nacimiento || 
-          !this.direccion || !this.telefono || !this.email || !this.contraseña) {
-        alert("Por favor, completa todos los campos requeridos.")
-      }
-
-      const clienteData = {
-        dni: this.dni,
-        nombre: this.nombre,
-        apellido: this.apellido,
-        fecha_de_nacimiento: this.fecha_de_nacimiento,
-        direccion: this.direccion,
-        telefono: this.telefono,
-        email: this.email,
-        contraseña: this.contraseña,
-      };
-
+      const clienteData = this.getClienteData();
       axios.post('http://127.0.0.1:8000/usuario/', clienteData)
         .then(() => {
           alert("CLIENTE REGISTRADO EXITOSAMENTE");
@@ -158,6 +163,31 @@ export default {
           console.error("Error al añadir el cliente:", error.response.data);
         });
     },
+    editarCliente() {
+      const id = this.$route.params.id;
+      const clienteData = this.getClienteData();
+      axios.put(`http://127.0.0.1:8000/usuario/${id}/`, clienteData)
+        .then(() => {
+          alert("CLIENTE ACTUALIZADO EXITOSAMENTE");
+          this.resetRegisterForm();
+          this.$router.go(-1);
+        })
+        .catch(error => {
+          console.error("Error al actualizar el cliente:", error.response.data);
+        });
+    },
+    getClienteData() {
+      return {
+        dni: this.dni,
+        nombre: this.nombre,
+        apellido: this.apellido,
+        fecha_de_nacimiento: this.fecha_de_nacimiento,
+        direccion: this.direccion,
+        telefono: this.telefono,
+        email: this.email,
+        contraseña: this.contraseña,
+      };
+    },
     resetRegisterForm() {
       this.dni = '';
       this.nombre = '';
@@ -167,7 +197,7 @@ export default {
       this.telefono = '';
       this.email = '';
       this.contraseña = '';
-      this.errorMessage = '';
+      this.isEditing = false;
       this.$refs.registerForm.reset();
     },
     inicio() {
@@ -179,9 +209,33 @@ export default {
     contacto() {
       this.$router.push("/contacto");
     },
+    loadClienteData(id) {
+      axios.get(`http://127.0.0.1:8000/usuario/${id}/`)
+        .then(response => {
+          const cliente = response.data;
+          this.dni = cliente.dni;
+          this.nombre = cliente.nombre;
+          this.apellido = cliente.apellido;
+          this.fecha_de_nacimiento = cliente.fecha_de_nacimiento;
+          this.direccion = cliente.direccion;
+          this.telefono = cliente.telefono;
+          this.email = cliente.email;
+          // No se recomienda mostrar la contraseña
+        })
+        .catch(error => {
+          console.error("Error al cargar los datos del cliente:", error);
+        });
+    },
+  },
+  created() {
+    if (this.$route.params.id) {
+      this.isEditing = true;
+      this.loadClienteData(this.$route.params.id);
+    }
   },
 };
 </script>
+
 
 <style scoped>
 .logo {
@@ -200,6 +254,8 @@ export default {
   border-radius: 12px;
 }
 </style>
+
+
 
 
   

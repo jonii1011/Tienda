@@ -6,6 +6,7 @@ import 'vuetify/dist/vuetify.min.css';
 import store from './store';
 
 Vue.config.productionTip = false
+store.commit('initializeStore');
 
 new Vue({
   store,

@@ -6,6 +6,10 @@ import LoginView from '@/components/LoginView.vue';
 import RegistrarCliente from '@/components/RegistrarCliente.vue';
 import GestionProductos from '@/components/GestionProductos.vue';
 import store from '@/store';
+import PerfilView from '@/components/PerfilView.vue';
+import GestionModelo from '@/components/GestionModelo.vue';
+import CarritoView from '@/components/CarritoView.vue';
+import VentasView from '@/components/VentasView.vue';
 
 Vue.use(Router);
 
@@ -36,6 +40,30 @@ const routes = [
     component: GestionProductos,
     meta: { requiresAuth: true }, // Ruta protegida
     props: true,
+  },
+  {
+    path: '/perfil',
+    name: 'PerfilView',
+    component: PerfilView,
+    meta: { requiresAuth: true }, // Ruta protegida
+  },
+  {
+    path: '/modelo',
+    name: 'GestionModelo',
+    component: GestionModelo,
+    meta: { requiresAuth: true }, // Ruta protegida
+  },
+  {
+    path: '/carrito',
+    name: 'CarritoView',
+    component: CarritoView,
+    meta: { requiresAuth: true }, // Ruta protegida
+  },
+  {
+    path: '/ventas',
+    name: 'VentasView',
+    component: VentasView,
+    meta: { requiresAuth: true }, // Ruta protegida
   },
 ];
 

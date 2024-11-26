@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h1>Bienvenido, {{ nombreUsuario }}</h1>
     <router-view></router-view>
   </div>
 </template>
@@ -11,9 +10,10 @@ import axios from 'axios';
 
 export default {
   computed: {
-    ...mapGetters(['isAuthenticated', 'nombreUsuario', 'userRole']),
+    ...mapGetters(['isAuthenticated', 'nombreUsuario', 'userRole', 'userId']),
   },
   created() {
+    this.$store.dispatch('initializeStore');
     this.checkAuthStatus();
   },
   methods: {
@@ -30,12 +30,14 @@ export default {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log('Respuesta de estado de autenticación:', response.data); 
       // Asegúrate de que la acción setAuth esté definida para manejar estos datos
       this.$store.commit('setAuth', {
         access: token,
         refresh: localStorage.getItem('refresh_token'),
         nombre: response.data.nombre || 'Usuario',
         role: response.data.role || '',
+        id: response.data.id || '',
       });
     } catch (error) {
       console.error('Error al verificar el estado de autenticación:', error);
@@ -46,9 +48,11 @@ export default {
 };
 </script>
 
-
-
-
+<style>
+html, body {
+  overflow: hidden;
+}
+</style>
 
 
 

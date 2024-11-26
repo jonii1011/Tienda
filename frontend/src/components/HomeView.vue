@@ -7,7 +7,9 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="verProductos" class="menu">Productos</v-btn>
-      <v-btn text @click="contacto" class="menu">Contacto</v-btn>
+      <v-btn text v-if="userRole === 'administrador'" @click="agregarProducto" class="menu">Agregar productos</v-btn>
+      <v-btn text v-if="userRole === 'administrador'" @click="agregarModelo" class="menu">Agregar modelos</v-btn>
+      <v-btn text v-if="userRole != 'administrador'" @click="contacto" class="menu">Contacto</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
         <template v-slot:activator="{ on, attrs }">
@@ -17,14 +19,20 @@
           <v-list-item @click="verPerfil">
             <v-list-item-title>Mi Perfil</v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="userRole === 'administrador'" @click="agregarProducto">
-            <v-list-item-title>Agregar Productos</v-list-item-title>
-          </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
+      <v-btn icon @click="verCarrito">
+        <v-badge
+          color="red"
+          :content="cantidadCarrito"
+          overlap
+        >
+          <v-icon>mdi-cart</v-icon>
+        </v-badge>
+      </v-btn>
     </v-app-bar>
 
     <div class="image-container">
@@ -62,14 +70,17 @@
               <span class="price">${{ producto.precio }}</span>
             </div>
             <v-card-actions class="justify-center">
-              <v-btn v-if="isAuthenticated" color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
-              <v-btn v-else color="grey" @click="iniciarSesion">Iniciar Sesión para Agregar</v-btn>
+              <v-btn v-if="isAuthenticated && userRole !== 'administrador'" color="grey" @click="agregarAlCarrito(producto)">
+                Agregar al Carrito
+              </v-btn>
+              <v-btn v-if="!isAuthenticated && userRole !== 'administrador'" color="grey" @click="iniciarSesion">
+                Iniciar Sesión para Agregar
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
     </v-container>
-
     <v-footer app>
       <v-container>
         <v-row>
@@ -94,18 +105,12 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['isAuthenticated', 'nombreUsuario', 'userRole']),
-  },
-  watch: {
-    nombreUsuario(newVal) {
-      if (newVal) {
-        console.log('Nombre de usuario actualizado:', newVal);
-      }
-    },
+    ...mapGetters(['isAuthenticated', 'nombreUsuario', 'userRole', 'userId', 'cantidadCarrito']),
   },
   created() {
+    console.log("id: ", this.userId);
     if (!this.isAuthenticated) {
-      this.$store.commit('loadAuthState');
+      this.$store.commit('login');
     }
     this.fetchProductos(); // Llama a la función para cargar productos
   },
@@ -123,15 +128,18 @@ export default {
       this.$router.push('/login'); // Redirige a la página de inicio de sesión
     },
     verPerfil() {
-      this.$router.push('/perfil'); // Redirige a la página del perfil
+      this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
     agregarAlCarrito(producto) {
       if (this.isAuthenticated) {
         console.log(`Agregado al carrito: ${producto.nombre}`);
-        // Lógica para agregar al carrito
+        this.$store.dispatch('agregarAlCarrito', producto); // Agrega el producto al carrito en Vuex
       } else {
         alert('Debes iniciar sesión para agregar productos al carrito.');
       }
+    },
+    verCarrito() {
+      this.$router.push('/carrito'); // Cambia '/carrito' por la ruta real de tu página de carrito
     },
     cerrarSesion() {
       this.$store.dispatch('logout'); // Llama a la acción de logout de Vuex
@@ -145,85 +153,13 @@ export default {
     },
     agregarProducto() {
       this.$router.push('/GestionProductos'); // Redirige a la página de gestión de productos
+    },
+    agregarModelo() {
+      this.$router.push('/modelo'); // Redirige a la página de gestión de productos
     }
   }
 };
 </script>
-
-
-<style scoped>
-.image-container {
-  position: relative;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-</style>
-
-
-<style scoped>
-.logo {
-  height: 40px;
-  margin-left: 10px;
-}
-.image-container {
-  position: relative;
-}
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.product-title {
-  font-weight: bold;
-}
-.price {
-  font-size: 1.2em;
-  color: #ff5722;
-}
-</style>
-
-
-
-
-
-
-<style scoped>
-.v-card {
-  max-width: 400px;
-  margin: auto;
-}
-.logo {
-  position: absolute;
-  height: 55px;
-  margin: 0;
-  padding: 0;
-}
-.menu {
-  text-decoration: none;
-  color: white;
-}
-.image-container {
-  position: relative;
-}
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-}
-</style>
 
 
 <style scoped>

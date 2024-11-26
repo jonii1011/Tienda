@@ -12,15 +12,24 @@ export default new Vuex.Store({
     accessToken: localStorage.getItem('access_token') || '',
     refreshToken: localStorage.getItem('refresh_token') || '',
     userRole: localStorage.getItem('userRole') || '',
+    userId: localStorage.getItem('userId') || '',
+    carrito: [], // Agrega esta línea
   },
   mutations: {
-    setAuth(state, { access, refresh, nombre, role }) {
-      console.log('Actualizando estado: ', { access, refresh, nombre, role });
+    setAuth(state, { access, refresh, nombre, role, id }) {
       state.isAuthenticated = true;
       state.nombreUsuario = nombre;
       state.accessToken = access;
       state.refreshToken = refresh;
       state.userRole = role;
+      state.userId = id;
+
+      // Guardar en localStorage
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      localStorage.setItem('nombreUsuario', nombre);
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userId', id);
     },
     clearAuth(state) {
       state.isAuthenticated = false;
@@ -28,6 +37,56 @@ export default new Vuex.Store({
       state.accessToken = '';
       state.refreshToken = '';
       state.userRole = ''; 
+      state.userId = '';
+
+      // Limpiar localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('nombreUsuario');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userId');
+    },
+    initializeStore(state) {
+      // Inicializa el estado desde localStorage
+      const access = localStorage.getItem('access_token');
+      const refresh = localStorage.getItem('refresh_token');
+      const nombre = localStorage.getItem('nombreUsuario');
+      const role = localStorage.getItem('userRole');
+      const id = localStorage.getItem('userId');
+
+      if (access) {
+        state.isAuthenticated = true;
+        state.accessToken = access;
+        state.refreshToken = refresh || '';
+        state.nombreUsuario = nombre || '';
+        state.userRole = role || '';
+        state.userId = id || '';
+      }
+    },
+    initializeCarrito(state) {
+      const carrito = localStorage.getItem('carrito');
+      if (carrito) {
+        state.carrito = JSON.parse(carrito);
+      }
+    },
+    agregarAlCarrito(state, producto) {
+      const existingProduct = state.carrito.find(item => item.id_producto === producto.id_producto);
+      if (existingProduct) {
+        // Si el producto ya existe, aumenta la cantidad
+        existingProduct.cantidad += 1;
+      } else {
+        // Si no existe, añade el producto con cantidad 1
+        state.carrito.push({
+          ...producto,
+          cantidad: 1, // Inicializa la cantidad en 1
+        });
+      }
+      // Guardar el carrito en localStorage
+    localStorage.setItem('carrito', JSON.stringify(state.carrito));
+    },
+    limpiarCarrito(state) {
+      state.carrito = [];
+      localStorage.removeItem('carrito'); // Elimina el carrito de localStorage
     },
   },
   actions: {
@@ -45,14 +104,8 @@ export default new Vuex.Store({
           refresh: response.data.refresh,
           nombre: response.data.nombre, // Asegúrate de que este campo exista
           role: response.data.role,
+          id: response.data.id,
         });
-    
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        localStorage.setItem('nombreUsuario', response.data.nombre);
-        localStorage.setItem('userRole', response.data.role);
-    
-        console.log('Nombre de usuario guardado:', response.data.nombre);
         
         // Llama a la función para obtener la información del usuario
         await dispatch('obtenerInformacionUsuario');
@@ -82,6 +135,7 @@ export default new Vuex.Store({
           refresh: localStorage.getItem('refresh_token'),
           nombre: response.data.nombre,
           role: response.data.role,
+          id: response.data.id,
         });
       } catch (error) {
         console.error('Error al obtener la información del usuario:', error);
@@ -89,10 +143,16 @@ export default new Vuex.Store({
     },
     logout({ commit }) {
       commit('clearAuth');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('nombreUsuario');
-      localStorage.removeItem('userRole');
+    },
+    agregarAlCarrito({ commit }, producto) {
+      commit('agregarAlCarrito', producto);
+    },
+    vaciarCarrito({ commit }) {
+      commit('limpiarCarrito');
+    },
+    initializeStore({ commit }) {
+      commit('initializeStore'); // Inicializa el estado de autenticación
+      commit('initializeCarrito'); // Inicializa el carrito
     },
   },
   getters: {
@@ -101,8 +161,14 @@ export default new Vuex.Store({
     userRole: state => state.userRole,
     accessToken: state => state.accessToken,
     refreshToken: state => state.refreshToken,
+    userId: state => state.userId,
+    carrito: state => state.carrito,
+    cantidadCarrito: state => {
+      return state.carrito.reduce((total, producto) => total + producto.cantidad, 0);
+    },
   },
 });
+
 
 
 

@@ -59,15 +59,18 @@ class ProductoSerializer(serializers.ModelSerializer):
             }
         return None  # Retorna None si no hay modelo relacionado
         
-class VentaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Venta
-        fields = '__all__'
 
 class DetalleVentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetalleVenta
         fields = '__all__'
+
+class VentaSerializer(serializers.ModelSerializer):
+    detalles = DetalleVentaSerializer(many=True, read_only=True, source='detalleventa_set')
+
+    class Meta:
+        model = Venta
+        fields = ['id_venta', 'cliente', 'forma_pago', 'fecha_venta', 'detalles']
 
 class FormaDePagoSerializer(serializers.ModelSerializer):
     class Meta:

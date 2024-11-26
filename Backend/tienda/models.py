@@ -76,7 +76,7 @@ class Venta(models.Model):
 
 class DetalleVenta(models.Model):
     cantidad = models.IntegerField()
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
     producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -119,11 +119,12 @@ class Carrito(models.Model):
         return f"Carrito de {self.cliente}"
 
 class DetalleCarrito(models.Model):
-    cantidad = models.IntegerField()
-    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()  # Cambiado a PositiveIntegerField
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='detalles_carrito')
 
     def __str__(self):
-        return f"{self.cantidad} de {self.producto} en {self.carrito}"
+        return f"{self.cantidad} de {self.producto.nombre} en {self.carrito}"
+
 
 
