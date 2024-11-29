@@ -61,21 +61,25 @@ class ProductoSerializer(serializers.ModelSerializer):
         
 
 class DetalleVentaSerializer(serializers.ModelSerializer):
+    producto = ProductoSerializer()  # Incluir el serializer del producto
+
     class Meta:
         model = DetalleVenta
-        fields = '__all__'
-
-class VentaSerializer(serializers.ModelSerializer):
-    detalles = DetalleVentaSerializer(many=True, read_only=True, source='detalleventa_set')
-
-    class Meta:
-        model = Venta
-        fields = ['id_venta', 'cliente', 'forma_pago', 'fecha_venta', 'detalles']
+        fields = ['cantidad', 'producto']
 
 class FormaDePagoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormaDePago
         fields = '__all__'
+
+class VentaSerializer(serializers.ModelSerializer):
+    forma_pago = FormaDePagoSerializer()
+    cliente = UsuarioSerializer()  
+    detalles = DetalleVentaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Venta
+        fields = ['id_venta', 'cliente', 'forma_pago', 'fecha_venta','detalles']
 
 class CarritoSerializer(serializers.ModelSerializer):
     class Meta:

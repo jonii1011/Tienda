@@ -16,7 +16,8 @@ from tienda.views import (
     DetalleCarritoViewSet,
     TipoProductoViewSet,
     ModeloViewSet,
-    AuthStatusView
+    AuthStatusView,
+    actualizar_stock,
 )
 
 router = DefaultRouter()
@@ -35,6 +36,7 @@ router.register(r'modelo', ModeloViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/status/', AuthStatusView.as_view(), name='auth_status'),
+    path('actualizar-stock/', actualizar_stock, name='actualizar_stock'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include(router.urls)),

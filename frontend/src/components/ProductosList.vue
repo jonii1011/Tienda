@@ -7,6 +7,8 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="inicio" class="menu">Inicio</v-btn>
+      <v-btn text v-if="isAdmin" @click="agregarProducto" class="menu">Agregar productos</v-btn>
+      <v-btn text v-if="isAdmin" @click="agregarModelo" class="menu">Agregar modelos</v-btn>
       <v-btn text v-if="!isAdmin" @click="contacto" class="menu">Contacto</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
@@ -17,17 +19,26 @@
           <v-list-item @click="verPerfil">
             <v-list-item-title>Mi Perfil</v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="isAuthenticated && isAdmin" @click="agregarProducto">
-            <v-list-item-title>Agregar Productos</v-list-item-title>
+          <v-list-item v-if="!isAdmin" @click="verPedido">
+            <v-list-item-title>Mis pedidos</v-list-item-title>
           </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
+      <v-btn v-if="!isAdmin && isAuthenticated" icon @click="verCarrito">
+        <v-badge
+          color="red"
+          :content="cantidadCarrito"
+          overlap
+        >
+          <v-icon>mdi-cart</v-icon>
+        </v-badge>
+      </v-btn>
     </v-app-bar>
 
-    <v-container class="mt-15 mb-50">
+    <v-container class="mt-15 mb-50" style="padding-bottom: 100px;">
       <v-row>
         <v-col cols="12" md="4">
           <v-select
@@ -45,13 +56,23 @@
             clearable
           ></v-select>
         </v-col>
-        <v-col cols="12" md="4">
-          <v-select
-            v-model="filtroPrecio"
-            :items="precioOpciones"
-            label="Filtrar por precio"
+        <v-col cols="12" md="2">
+          <v-text-field
+            v-model.number="precioMin"
+            label="Precio Mínimo"
+            type="number"
             clearable
-          ></v-select>
+            placeholder="Precio mínimo"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field
+            v-model.number="precioMax"
+            label="Precio Máximo"
+            type="number"
+            clearable
+            placeholder="Precio máximo"
+          ></v-text-field>
         </v-col>
       </v-row>
 
@@ -77,7 +98,12 @@
               <span class="price">${{ producto.precio }}</span>
             </div>
             <v-card-actions class="justify-center">
-              <v-btn v-if="!isAdmin" color="grey" @click="agregarAlCarrito(producto)">Agregar al Carrito</v-btn>
+              <v-btn v-if="isAuthenticated && !isAdmin" color="grey" @click="agregarAlCarrito(producto)">
+                Agregar al Carrito
+              </v-btn>
+              <v-btn v-if="!isAuthenticated && !isAdmin" color="grey" @click="iniciarSesion">
+                Iniciar Sesión para Agregar
+              </v-btn>
               <v-btn v-if="isAdmin" color="grey" @click="editarProducto(producto)">Editar</v-btn>
               <v-btn v-if="isAdmin" color="red" @click="eliminarProducto(producto)">Eliminar</v-btn>
             </v-card-actions>
@@ -99,6 +125,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import axios from 'axios';
 
 export default {
@@ -107,13 +134,9 @@ export default {
       productos: [],
       filtroModelo: null,
       filtroTipo: null,
-      filtroPrecio: null,
+      precioMin: null,
+      precioMax: null,
       orden: null, // 'asc' o 'desc'
-      precioOpciones: [
-        { text: 'Todos', value: null },
-        { text: 'Menos de 800', value: 800 },
-        { text: '900 - 1200', value: [900, 1200] },
-      ],
       modelosOpciones: [],
       tiposOpciones: [
         { text: 'Smartphone', value: 1 },
@@ -126,6 +149,7 @@ export default {
     this.fetchProductos(); // Llama a la función para cargar productos
   },
   computed: {
+    ...mapGetters(['cantidadCarrito']),
     isAuthenticated() {
       return this.$store.getters.isAuthenticated;
     },
@@ -139,32 +163,31 @@ export default {
       return this.$store.getters.userId;
     },
     productosFiltrados() {
-        return this.productos.filter((producto) => {
-          const cumpleModelo = this.filtroModelo ? 
-            (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
-            true;
+      return this.productos.filter((producto) => {
+        const cumpleModelo = this.filtroModelo ? 
+          (producto.modelo_detalle && producto.modelo_detalle.nombre_modelo === this.filtroModelo) : 
+          true;
 
-          const cumpleTipo = this.filtroTipo ? 
-            producto.tipo_producto === this.filtroTipo : 
-            true;
+        const cumpleTipo = this.filtroTipo ? 
+          producto.tipo_producto === this.filtroTipo : 
+          true;
 
-          const cumplePrecio = this.filtroPrecio ? (
-            Array.isArray(this.filtroPrecio) ?
-              (producto.precio >= this.filtroPrecio[0] && producto.precio <= this.filtroPrecio[1]) :
-              (producto.precio < this.filtroPrecio)
-          ) : true;
+        const cumplePrecio = (
+          (this.precioMin === null || producto.precio >= Number(this.precioMin)) &&
+          (this.precioMax === null || producto.precio <= Number(this.precioMax))
+        );
 
-          return cumpleModelo && cumpleTipo && cumplePrecio;
-        }).sort((a, b) => {
-          if (this.orden === 'asc') {
-            return a.precio - b.precio;
-          } else if (this.orden === 'desc') {
-            return b.precio - a.precio;
-          }
-          return 0;
-        });
-      },
+        return cumpleModelo && cumpleTipo && cumplePrecio;
+      }).sort((a, b) => {
+        if (this.orden === 'asc') {
+          return a.precio - b.precio;
+        } else if (this.orden === 'desc') {
+          return b.precio - a.precio;
+        }
+        return 0;
+      });
     },
+  },
   methods: {
     ordenarProductos(orden) {
       this.orden = orden;
@@ -188,6 +211,7 @@ export default {
     agregarAlCarrito(producto) {
       if (this.isAuthenticated) {
         console.log(`Agregado al carrito: ${producto.nombre}`);
+        this.$store.dispatch('agregarAlCarrito', producto); // Agrega el producto al carrito en Vuex
       } else {
         alert('Debes iniciar sesión para agregar productos al carrito.');
       }
@@ -205,22 +229,31 @@ export default {
     verPerfil() {
       this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
+    verCarrito() {
+      this.$router.push('/carrito'); 
+    },
     contacto() {
       this.$router.push('/contacto'); // Redirige a la página de contacto
+    },
+    verPedido() {
+      this.$router.push('/ventas'); 
     },
     agregarProducto() {
       this.$router.push('/GestionProductos'); // Redirige a la página para agregar productos
     },
+    agregarModelo() {
+      this.$router.push('/modelo'); // Redirige a la página de gestión de productos
+    },
     editarProducto(producto) {
-    this.$router.push({ 
-      name: 'GestionProductos', 
-      params: { 
-        modo: 'editar', 
-        id_producto: producto.id_producto,
-        id_tipo_producto: producto.tipo_producto ? producto.tipo_producto.id_tipo_producto : null,
-        id_modelo: producto.modelo ? producto.modelo.id_modelo : null
-      } 
-    });
+      this.$router.push({ 
+        name: 'GestionProductos', 
+        params: { 
+          modo: 'editar', 
+          id_producto: producto.id_producto,
+          id_tipo_producto: producto.tipo_producto ? producto.tipo_producto.id_tipo_producto : null,
+          id_modelo: producto.modelo ? producto.modelo.id_modelo : null
+        } 
+      });
     },
     eliminarProducto(producto) {
       // Confirmar eliminación del producto
@@ -240,6 +273,11 @@ export default {
   },
 };
 </script>
+
+
+
+
+
 
 
 

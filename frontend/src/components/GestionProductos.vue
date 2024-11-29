@@ -7,6 +7,7 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="inicio" class="menu">Inicio</v-btn>
+      <v-btn text v-if="isAdmin" @click="agregarModelo" class="menu">Agregar modelos</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
         <template v-slot:activator="{ on, attrs }">
@@ -113,7 +114,6 @@
                     :items="modelosFormatted"
                     item-text="displayName"
                     item-value="id_modelo"
-                    :rules="[v => !!v || 'Modelo es requerido']"
                     outlined
                     required
                     color="primary"
@@ -253,7 +253,10 @@ export default {
       }
 
       formData.append('tipo_producto', this.tipo_producto_id);
-      formData.append('modelo', this.id_modelo);
+      // Solo agregar el modelo si está definido
+      if (this.id_modelo) {
+        formData.append('modelo', this.id_modelo);
+      }
 
       const url = this.modo === 'editar' 
         ? `http://127.0.0.1:8000/productos/${this.$route.params.id_producto}/` 
@@ -296,8 +299,11 @@ export default {
       this.$router.push('/');
     },
     verPerfil() {
-      // Implementa la lógica para ver perfil
+      this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
+    agregarModelo() {
+      this.$router.push('/modelo'); // Redirige a la página de gestión de productos
+    }
   },
 };
 </script>

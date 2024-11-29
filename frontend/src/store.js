@@ -88,6 +88,21 @@ export default new Vuex.Store({
       state.carrito = [];
       localStorage.removeItem('carrito'); // Elimina el carrito de localStorage
     },
+    AUMENTAR_CANTIDAD(state, productoId) {
+      const producto = state.carrito.find(item => item.id_producto === productoId);
+      if (producto) {
+        producto.cantidad += 1;
+        localStorage.setItem('carrito', JSON.stringify(state.carrito)); // Guarda en localStorage
+      }
+    },
+    
+    DISMINUIR_CANTIDAD(state, productoId) {
+      const producto = state.carrito.find(item => item.id_producto === productoId);
+      if (producto && producto.cantidad > 1) {
+        producto.cantidad -= 1;
+        localStorage.setItem('carrito', JSON.stringify(state.carrito)); // Guarda en localStorage
+      }
+    },
   },
   actions: {
     async login({ commit, dispatch }, { email, password }) {
@@ -143,6 +158,7 @@ export default new Vuex.Store({
     },
     logout({ commit }) {
       commit('clearAuth');
+      commit('limpiarCarrito'); // Limpia el carrito
     },
     agregarAlCarrito({ commit }, producto) {
       commit('agregarAlCarrito', producto);
@@ -153,6 +169,12 @@ export default new Vuex.Store({
     initializeStore({ commit }) {
       commit('initializeStore'); // Inicializa el estado de autenticación
       commit('initializeCarrito'); // Inicializa el carrito
+    },
+    aumentarCantidad({ commit }, productoId) {
+      commit('AUMENTAR_CANTIDAD', productoId);
+    },
+    disminuirCantidad({ commit }, productoId) {
+      commit('DISMINUIR_CANTIDAD', productoId);
     },
   },
   getters: {

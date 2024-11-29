@@ -19,12 +19,15 @@
           <v-list-item @click="verPerfil">
             <v-list-item-title>Mi Perfil</v-list-item-title>
           </v-list-item>
+          <v-list-item v-if="userRole != 'administrador'" @click="verPedido">
+            <v-list-item-title>Mis pedidos</v-list-item-title>
+          </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-btn icon @click="verCarrito">
+      <v-btn v-if="userRole != 'administrador' && isAuthenticated" icon @click="verCarrito">
         <v-badge
           color="red"
           :content="cantidadCarrito"
@@ -139,7 +142,10 @@ export default {
       }
     },
     verCarrito() {
-      this.$router.push('/carrito'); // Cambia '/carrito' por la ruta real de tu página de carrito
+      this.$router.push('/carrito'); 
+    },
+    verPedido() {
+      this.$router.push('/ventas'); 
     },
     cerrarSesion() {
       this.$store.dispatch('logout'); // Llama a la acción de logout de Vuex

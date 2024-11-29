@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-l$!h8e56dsmox!zvf@+dxp5318*nn^#u72r0havgl_i&-kawg^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'tienda.Usuario'
 
@@ -59,7 +59,7 @@ from datetime import timedelta
 from django.conf import settings
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,  # Cambiar a True si deseas rotación
     'BLACKLIST_AFTER_ROTATION': True,
@@ -166,3 +166,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760

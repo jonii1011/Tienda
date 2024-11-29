@@ -21,6 +21,31 @@ from .serializers import (
     ModeloSerializer
 )
 
+@api_view(['POST'])
+def actualizar_stock(request):
+    if not isinstance(request.data, list):
+        return Response({'error': 'Formato de datos incorrecto, se esperaba un arreglo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        for item in request.data:
+            if 'id_producto' not in item or 'cantidad' not in item:
+                return Response({'error': 'Faltan campos requeridos: id_producto y cantidad'}, status=status.HTTP_400_BAD_REQUEST)
+
+            producto = Producto.objects.get(id_producto=item['id_producto'])
+            if producto.stock >= item['cantidad']:
+                producto.stock -= item['cantidad']
+                producto.save()
+            else:
+                return Response({'error': f'No hay suficiente stock para el producto: {producto.nombre}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({'message': 'Stock actualizado con éxito'}, status=status.HTTP_200_OK)
+    
+    except Producto.DoesNotExist:
+        return Response({'error': 'Producto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def agregar_al_carrito(request, producto_id):
@@ -82,9 +107,15 @@ class ProductoViewSet(viewsets.ModelViewSet):
     serializer_class = ProductoSerializer
 
 class VentaViewSet(viewsets.ModelViewSet):
-    queryset = Venta.objects.select_related('cliente').prefetch_related('detalles')
     serializer_class = VentaSerializer
     permission_classes = [IsAuthenticated]
+    
+    # Define el queryset aquí
+    queryset = Venta.objects.select_related('cliente').prefetch_related('detalles')
+
+    def get_queryset(self):
+        # Filtra las ventas para que solo devuelvan las del usuario autenticado
+        return self.queryset.filter(cliente=self.request.user)
 
     def create(self, request, *args, **kwargs):
         cliente = request.user
@@ -99,7 +130,7 @@ class VentaViewSet(viewsets.ModelViewSet):
             venta = Venta.objects.create(cliente=cliente, forma_pago_id=forma_pago_id)
 
             for item in carrito:
-                producto_id = item['id_producto']  # Este es correcto
+                producto_id = item['id_producto']
                 cantidad = item['cantidad']
 
                 # Asegúrate de que el producto exista usando el campo correcto
@@ -159,5 +190,4 @@ class DetalleCarritoViewSet(viewsets.ModelViewSet):
         # Devuelve solo los detalles del carrito del usuario autenticado
         carrito = Carrito.objects.get(cliente=self.request.user)
         return DetalleCarrito.objects.filter(carrito=carrito)
-
 

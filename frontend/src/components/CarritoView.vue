@@ -14,6 +14,9 @@
           <v-btn color="black" v-bind="attrs" v-on="on">{{ nombreUsuario }}</v-btn>
         </template>
         <v-list>
+          <v-list-item @click="verPedido">
+            <v-list-item-title>Mis pedidos</v-list-item-title>
+          </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
@@ -26,7 +29,7 @@
       </v-btn>
     </v-app-bar>
 
-    <v-container class="mt-15 mb-50">
+    <v-container class="mt-15 mb-50" style="padding-bottom: 100px;">
       <v-card class="mx-auto" style="max-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); background-color: #f5f5f5; margin-top: 60px;">
         <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Carrito de Compras</v-card-title>
         <v-card-text>
@@ -35,9 +38,17 @@
               <v-list-item v-for="producto in carrito" :key="producto.id">
                 <v-list-item-content>
                   <v-list-item-title><strong>Producto:</strong> {{ producto.nombre }} {{ producto.modelo_detalle.nombre_modelo }} {{ producto.modelo_detalle.version }}</v-list-item-title>
-                  <v-list-item-title><strong>Cantidad:</strong> {{ producto.cantidad }}</v-list-item-title>
+                  <v-list-item-title>
+                      <strong>Cantidad:</strong>
+                      <v-btn icon @click="disminuirCantidad(producto)">
+                        <v-icon>mdi-minus</v-icon>
+                      </v-btn>
+                      {{ producto.cantidad }}
+                      <v-btn icon @click="aumentarCantidad(producto)">
+                        <v-icon>mdi-plus</v-icon>
+                      </v-btn>
+                    </v-list-item-title>
                   <v-list-item-title><strong>Precio:</strong> ${{ producto.precio }}</v-list-item-title>
-                  <v-list-item-title><strong>Total:</strong> ${{ producto.precio * producto.cantidad }}</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
             </v-list-item-group>
@@ -47,6 +58,12 @@
               </v-list-item-content>
             </v-list-item>
           </v-list>
+
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title class="headline"><strong>Total de la Compra:</strong> ${{ totalCompra }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
 
           <!-- Selector de forma de pago -->
           <v-select
@@ -60,7 +77,7 @@
           ></v-select>
         </v-card-text>
         <v-card-actions>
-          <v-btn color="green" @click="concretarVenta" v-if="carrito.length && formaPagoId">Concretar Venta</v-btn>
+          <v-btn color="green" @click="concretarVenta" v-if="carrito.length && formaPagoId">Concretar compra</v-btn>
           <v-btn color="grey" @click="vaciarCarrito" v-if="carrito.length">Vaciar Carrito</v-btn>
         </v-card-actions>
       </v-card>
@@ -97,11 +114,53 @@ export default {
     totalCantidad() {
       return this.carrito.reduce((total, producto) => total + producto.cantidad, 0);
     },
+    totalCompra() {
+    return this.carrito.reduce((total, producto) => total + (producto.precio * producto.cantidad), 0);
+    },
   },
   mounted() {
     this.cargarFormasDePago(); // Cargar las formas de pago al montar el componente
   },
   methods: {
+    async actualizarStock() {
+      const productosParaActualizar = this.carrito.map(item => ({
+        id_producto: item.id_producto,
+        cantidad: item.cantidad
+      }));
+
+      try {
+        console.log('Productos para actualizar:', productosParaActualizar);
+        const token = localStorage.getItem('access_token');
+        await axios.post('http://127.0.0.1:8000/actualizar-stock/', productosParaActualizar, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Error al actualizar el stock:', error.response.data);
+        alert('Ocurrió un error al actualizar el stock. Por favor, intenta nuevamente.');
+      }
+    },
+    async verificarStock() {
+      // Crear un objeto que contenga el id del producto y la cantidad del carrito
+      const productosAVerificar = this.carrito.map(item => ({
+        id_producto: item.id_producto,
+        nombre: item.nombre,
+        nombre_modelo: item.modelo_detalle.nombre_modelo,
+        version: item.modelo_detalle.version,
+        cantidad: item.cantidad,
+        stock: item.stock // Asegúrate de que este atributo esté presente en cada producto
+      }));
+
+      // Verificar el stock de cada producto
+      for (const producto of productosAVerificar) {
+        if (producto.cantidad > producto.stock) {
+          alert(`No hay suficiente stock para el producto: ${producto.nombre} ${producto.nombre_modelo} ${producto.version}. Solo hay ${producto.stock} disponibles.`);
+          return false; // Detener si no hay suficiente stock
+        }
+      }
+      return true; // Si todos los productos tienen suficiente stock
+    },
     async cargarFormasDePago() {
       try {
         const response = await axios.get('http://127.0.0.1:8000/formas-pago/');
@@ -115,15 +174,26 @@ export default {
       this.$router.push('/');
     },
     cerrarSesion() {
-      // Lógica para cerrar sesión
-    },
+        this.$store.dispatch('logout');
+        this.$router.push('/');
+      },
     contacto() {
       // Lógica para contacto
     },
     verCarrito() {
       // Lógica para ver el carrito
     },
-    concretarVenta() {
+    aumentarCantidad(producto) {
+      this.$store.dispatch('aumentarCantidad', producto.id_producto);
+    },
+
+    disminuirCantidad(producto) {
+      this.$store.dispatch('disminuirCantidad', producto.id_producto);
+    },
+    verPedido() {
+      this.$router.push('/ventas'); 
+    },
+    async concretarVenta() {
       if (!this.isAuthenticated) {
         alert('Debes iniciar sesión para realizar una compra.');
         return;
@@ -134,33 +204,40 @@ export default {
         return;
       }
 
+      const stockDisponible = await this.verificarStock();
+      if (!stockDisponible) {
+        return; // Si no hay stock, se detiene aquí
+      }
+
       const payload = {
-      forma_pago_id: this.formaPagoId,
-      cliente_id: this.userId,
-      carrito: this.carrito.map(item => ({
-        id_producto: item.id_producto,
-        cantidad: item.cantidad
-      }))
-    };
+        forma_pago_id: this.formaPagoId,
+        cliente_id: this.userId,
+        carrito: this.carrito.map(item => ({
+          id_producto: item.id_producto,
+          cantidad: item.cantidad
+        }))
+      };
 
       console.log('Payload:', payload);
 
       const token = localStorage.getItem('access_token');
 
-      axios.post(`http://127.0.0.1:8000/ventas/`, payload, {
-        headers: {
-          'Authorization': `Bearer ${token}` // Asegúrate de incluir el token aquí
-        }
-      })
-      .then(response => {
+      try {
+        const response = await axios.post(`http://127.0.0.1:8000/ventas/`, payload, {
+          headers: {
+            'Authorization': `Bearer ${token}` // Asegúrate de incluir el token aquí
+          }
+        });
+        alert("COMPRA FINALIZADA CON ÉXITO");
         console.log('Venta concretada:', response.data);
-        // Actualiza el carrito después de la venta
+        
+        // Actualiza el stock después de la venta
+        await this.actualizarStock(); // Llama a la función para actualizar el stock
         this.vaciarCarrito(); // Llama a la acción para vaciar el carrito
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error al concretar la venta:', error.response ? error.response.data : error.message);
         alert('Ocurrió un error al concretar la venta. Por favor, intenta nuevamente.');
-      });
+      }
     },
     vaciarCarrito() {
       this.$store.dispatch('vaciarCarrito');

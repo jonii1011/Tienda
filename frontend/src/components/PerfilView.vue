@@ -14,6 +14,9 @@
           <v-btn color="black" v-bind="attrs" v-on="on">{{ nombreUsuario }}</v-btn>
         </template>
         <v-list>
+          <v-list-item @click="verPedido">
+            <v-list-item-title>Mis pedidos</v-list-item-title>
+          </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
@@ -110,6 +113,9 @@ export default {
     },
     contacto() {
       this.$router.push('/contacto');
+    },
+    verPedido() {
+      this.$router.push('/ventas'); 
     },
     agregarProducto() {
       this.$router.push('/GestionProductos');

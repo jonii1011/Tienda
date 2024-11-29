@@ -7,6 +7,7 @@
         </div>
         <v-spacer></v-spacer>
         <v-btn text @click="inicio" class="menu">Inicio</v-btn>
+        <v-btn text v-if="isAdmin" @click="agregarProducto" class="menu">Agregar productos</v-btn>
         <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
         <v-menu v-else>
           <template v-slot:activator="{ on, attrs }">

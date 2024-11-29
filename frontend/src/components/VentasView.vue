@@ -14,6 +14,9 @@
           <v-btn color="black" v-bind="attrs" v-on="on">{{ nombreUsuario }}</v-btn>
         </template>
         <v-list>
+          <v-list-item @click="verPerfil">
+            <v-list-item-title>Mi Perfil</v-list-item-title>
+          </v-list-item>
           <v-list-item @click="cerrarSesion">
             <v-list-item-title>Cerrar Sesión</v-list-item-title>
           </v-list-item>
@@ -26,9 +29,9 @@
       </v-btn>
     </v-app-bar>
 
-    <v-container class="mt-15 mb-50">
+    <v-container class="mt-15 mb-50" style="padding-bottom: 100px;">
       <v-card class="mx-auto" style="max-width: 800px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); background-color: #f5f5f5; margin-top: 60px;">
-        <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Historial de Ventas</v-card-title>
+        <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Historial de pedidos</v-card-title>
         <v-card-text>
           <v-list>
             <v-list-item-group v-if="ventas.length">
@@ -36,7 +39,7 @@
                 <v-list-item-content>
                   <v-list-item-title><strong>ID Venta:</strong> {{ venta.id_venta }}</v-list-item-title>
                   <v-list-item-title><strong>Cliente:</strong> {{ venta.cliente.nombre }}</v-list-item-title>
-                  <v-list-item-title><strong>Forma de pago:</strong> {{ venta.forma_pago }}</v-list-item-title>
+                  <v-list-item-title><strong>Forma de pago:</strong> {{ venta.forma_pago.nombre }}</v-list-item-title>
                   <v-list-item-title><strong>Fecha:</strong> {{ new Date(venta.fecha_venta).toLocaleString() }}</v-list-item-title>
                   <v-list-item-title><strong>Detalles:</strong></v-list-item-title>
                   <v-list-item>
@@ -44,9 +47,9 @@
                       <v-list dense>
                         <v-list-item v-for="detalle in venta.detalles" :key="detalle.producto.id_producto">
                           <v-list-item-content>
-                            <v-list-item-title><strong>Producto:</strong> {{ detalle.producto.nombre }}</v-list-item-title>
+                            <v-list-item-title><strong>Producto:</strong> {{ detalle.producto.nombre }} {{ detalle.producto.modelo_detalle.nombre_modelo }} {{ detalle.producto.modelo_detalle.version }}</v-list-item-title>
                             <v-list-item-title><strong>Cantidad:</strong> {{ detalle.cantidad }}</v-list-item-title>
-                            <v-list-item-title><strong>Precio:</strong> ${{ detalle.producto.precio }}</v-list-item-title>
+                            <v-list-item-title><strong>Precio Unitario:</strong> ${{ detalle.producto.precio }}</v-list-item-title>
                           </v-list-item-content>
                         </v-list-item>
                       </v-list>
@@ -58,7 +61,7 @@
             </v-list-item-group>
             <v-list-item v-else>
               <v-list-item-content>
-                <v-list-item-title>No hay ventas registradas.</v-list-item-title>
+                <v-list-item-title>No hay pedidos registradas.</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list>
@@ -106,7 +109,7 @@ export default {
             'Authorization': `Bearer ${token}` // Incluye el token de autorización
           }
         });
-        console.log(response.data);
+        console.log("respuesta", response.data);
         this.ventas = response.data; // Asigna los datos a la variable
       } catch (error) {
         console.error('Error al cargar las ventas:', error);
@@ -130,19 +133,22 @@ export default {
       this.$router.push('/');
     },
     cerrarSesion() {
-      // Lógica para cerrar sesión
+      this.$store.dispatch('logout'); // Llama a la acción de logout de Vuex
+      this.$router.push('/login'); // Redirige a la página de inicio de sesión
     },
     contacto() {
       // Lógica para contacto
     },
     verCarrito() {
-      // Lógica para ver carrito
+      this.$router.push('/carrito'); 
+    },
+    verPerfil() {
+      this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
   }
 };
 </script>
 
-  
   <style scoped>
   .logo {
     width: 40px; /* Ajusta el tamaño según sea necesario */
