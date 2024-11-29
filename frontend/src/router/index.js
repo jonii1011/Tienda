@@ -10,6 +10,7 @@ import PerfilView from '@/components/PerfilView.vue';
 import GestionModelo from '@/components/GestionModelo.vue';
 import CarritoView from '@/components/CarritoView.vue';
 import VentasView from '@/components/VentasView.vue';
+import ContactoView from '@/components/ContactoView.vue';
 
 Vue.use(Router);
 
@@ -64,6 +65,11 @@ const routes = [
     name: 'VentasView',
     component: VentasView,
     meta: { requiresAuth: true }, // Ruta protegida
+  },
+  {
+    path: '/contacto',
+    name: 'ContactoView',
+    component: ContactoView,
   },
 ];
 

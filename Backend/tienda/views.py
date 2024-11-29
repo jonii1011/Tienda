@@ -72,8 +72,28 @@ class AuthStatusView(APIView):
             'isAuthenticated': True,
             'role': user.rol,  
             'nombre': user.nombre,
+            'correo': user.email,
             'id': user.id  
         })
+
+from django.core.mail import send_mail
+from django.conf import settings
+@api_view(['POST'])
+def contacto(request):
+    nombre = request.data.get('nombre')
+    correo = request.data.get('correo')
+    mensaje = request.data.get('mensaje')
+
+    # Enviar correo de confirmación
+    send_mail(
+        'Confirmación de Contacto',
+        f'Hola {nombre},\n\nGracias por tu mensaje. Nos comunicaremos contigo pronto.\n\nMensaje:\n{mensaje}',
+        settings.DEFAULT_FROM_EMAIL,
+        [correo],
+        fail_silently=False,
+    )
+
+    return Response({'status': 'Mensaje enviado'})
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()

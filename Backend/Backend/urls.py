@@ -18,6 +18,7 @@ from tienda.views import (
     ModeloViewSet,
     AuthStatusView,
     actualizar_stock,
+    contacto
 )
 
 router = DefaultRouter()
@@ -39,6 +40,7 @@ urlpatterns = [
     path('actualizar-stock/', actualizar_stock, name='actualizar_stock'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/contacto/', contacto, name='contacto'),
     path('', include(router.urls)),
 ]
 if settings.DEBUG:

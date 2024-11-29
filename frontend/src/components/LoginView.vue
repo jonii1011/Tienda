@@ -125,7 +125,7 @@ export default {
       this.$router.push('/');
     },
     contacto() {
-      this.$router.push('/');
+      this.$router.push('/contacto');
     },
   },
 };

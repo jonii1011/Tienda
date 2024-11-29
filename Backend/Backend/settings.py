@@ -113,6 +113,18 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'tienda',
+#        'USER': 'joni',
+#        'PASSWORD': 'joni1011',
+#        'HOST': 'localhost',  # o la dirección IP de tu servidor de base de datos
+#        'PORT': '',           # Deja vacío para usar el puerto por defecto (5432)
+#    }
+#}
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -168,3 +180,13 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+#CONFIGURACION PARA ENVIAR EL CORREO DE CONFIRMACION
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Cambia esto según tu proveedor de correo
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'jonive1011@gmail.com'
+EMAIL_HOST_PASSWORD = 'iftutjjuivgvqizz'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

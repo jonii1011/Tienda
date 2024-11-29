@@ -24,7 +24,7 @@
         </v-menu>
       </v-app-bar>
   
-      <v-container v-if="isAdmin" class="mt-15 mb-50">
+      <v-container v-if="isAdmin" class="mt-15 mb-50" style="padding-bottom: 100px;">
         <v-card class="mx-auto" style="max-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); background-color: #f5f5f5; margin-top: 60px;">
           <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Agregar Modelo</v-card-title>
           <v-card-text>
@@ -67,7 +67,7 @@
         </v-card>
       </v-container>
   
-      <v-footer>
+      <v-footer app>
         <v-container>
           <v-row>
             <v-col class="text-center">

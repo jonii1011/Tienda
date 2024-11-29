@@ -16,13 +16,14 @@ export default new Vuex.Store({
     carrito: [], // Agrega esta línea
   },
   mutations: {
-    setAuth(state, { access, refresh, nombre, role, id }) {
+    setAuth(state, { access, refresh, nombre, role, id, correo }) {
       state.isAuthenticated = true;
       state.nombreUsuario = nombre;
       state.accessToken = access;
       state.refreshToken = refresh;
       state.userRole = role;
       state.userId = id;
+      state.correoUsuario = correo;
 
       // Guardar en localStorage
       localStorage.setItem('access_token', access);
@@ -30,19 +31,23 @@ export default new Vuex.Store({
       localStorage.setItem('nombreUsuario', nombre);
       localStorage.setItem('userRole', role);
       localStorage.setItem('userId', id);
+      localStorage.setItem('correoUsuario', correo);
     },
     clearAuth(state) {
       state.isAuthenticated = false;
       state.nombreUsuario = '';
+      state.correoUsuario = '';
       state.accessToken = '';
       state.refreshToken = '';
       state.userRole = ''; 
       state.userId = '';
+      
 
       // Limpiar localStorage
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('nombreUsuario');
+      localStorage.removeItem('correoUsuario');
       localStorage.removeItem('userRole');
       localStorage.removeItem('userId');
     },
@@ -117,7 +122,8 @@ export default new Vuex.Store({
         commit('setAuth', {
           access: response.data.access,
           refresh: response.data.refresh,
-          nombre: response.data.nombre, // Asegúrate de que este campo exista
+          nombre: response.data.nombre,
+          correo: response.data.correo,
           role: response.data.role,
           id: response.data.id,
         });
@@ -149,6 +155,7 @@ export default new Vuex.Store({
           access: token,
           refresh: localStorage.getItem('refresh_token'),
           nombre: response.data.nombre,
+          correo: response.data.correo,
           role: response.data.role,
           id: response.data.id,
         });
@@ -180,6 +187,7 @@ export default new Vuex.Store({
   getters: {
     isAuthenticated: state => state.isAuthenticated,
     nombreUsuario: state => state.nombreUsuario,
+    correoUsuario: state => state.correoUsuario,
     userRole: state => state.userRole,
     accessToken: state => state.accessToken,
     refreshToken: state => state.refreshToken,

@@ -52,6 +52,9 @@
                             <v-list-item-title><strong>Precio Unitario:</strong> ${{ detalle.producto.precio }}</v-list-item-title>
                           </v-list-item-content>
                         </v-list-item>
+                        <v-list-item-title>
+                          <strong>Total:</strong> ${{ calcularTotal(venta) }}
+                        </v-list-item-title>
                       </v-list>
                     </v-list-item-content>
                   </v-list-item>
@@ -129,6 +132,11 @@ export default {
         console.error('Error al eliminar la venta:', error);
       }
     },
+    calcularTotal(venta) {
+    return venta.detalles.reduce((total, detalle) => {
+      return total + (detalle.cantidad * detalle.producto.precio);
+    }, 0);
+    },
     inicio() {
       this.$router.push('/');
     },
@@ -149,10 +157,10 @@ export default {
 };
 </script>
 
-  <style scoped>
-  .logo {
-    width: 40px; /* Ajusta el tamaño según sea necesario */
-    height: auto;
+<style scoped>
+.logo {
+  width: 40px; /* Ajusta el tamaño según sea necesario */
+  height: auto;
   }
-  </style>
+</style>
   

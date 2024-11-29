@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./Backend  # Directorio donde está el Dockerfile del backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Backend:/app  # Refleja cambios de código en tiempo real
+    environment:
+      - DEBUG=True  # Variable de entorno para Django
+      - ALLOWED_HOSTS=*
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend  # Directorio donde está el Dockerfile del frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/app  # Refleja cambios de código en tiempo real
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    
+    #networks: Define redes personalizadas para los contenedores.
+        #app-network: Crea una red llamada app-network usando el driver bridge, que es el tipo de red predeterminado en Docker. Esto permite que los contenedores se comuniquen entre sí de manera segura.
+
+
