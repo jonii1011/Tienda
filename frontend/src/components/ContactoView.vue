@@ -7,7 +7,7 @@
       </div>
       <v-spacer></v-spacer>
       <v-btn text @click="inicio" class="menu">Inicio</v-btn>
-      <v-btn text @click="producto" class="menu">Productos</v-btn>
+      <v-btn text @click="verProductos" class="menu">Productos</v-btn>
       <v-btn v-if="!isAuthenticated" color="black" @click="iniciarSesion">Iniciar Sesión</v-btn>
       <v-menu v-else>
         <template v-slot:activator="{ on, attrs }">
@@ -155,11 +155,17 @@ export default {
     verPerfil() {
       this.$router.push({ name: 'PerfilView', params: { userId: this.userId } });
     },
+    verCarrito() {
+      this.$router.push('/carrito'); 
+    },
     verPedido() {
       this.$router.push('/ventas'); 
     },
     cerrarSesion() {
       this.$store.dispatch('logout'); // Llama a la acción de logout de Vuex
+    },
+    verProductos() {
+      this.$router.push('/productos/lista'); // Redirige a la página de productos
     },
   },
 };

@@ -22,11 +22,6 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-btn icon @click="verCarrito">
-        <v-badge color="red" :content="cantidadCarrito" overlap>
-          <v-icon>mdi-cart</v-icon>
-        </v-badge>
-      </v-btn>
     </v-app-bar>
 
     <v-container class="mt-15 mb-50" style="padding-bottom: 100px;">
@@ -34,11 +29,16 @@
         <v-card-title class="headline text-center" style="font-weight: bold; color: black;">Carrito de Compras</v-card-title>
         <v-card-text>
           <v-list>
-            <v-list-item-group v-if="carrito.length">
-              <v-list-item v-for="producto in carrito" :key="producto.id">
-                <v-list-item-content>
-                  <v-list-item-title><strong>Producto:</strong> {{ producto.nombre }} {{ producto.modelo_detalle.nombre_modelo }} {{ producto.modelo_detalle.version }}</v-list-item-title>
-                  <v-list-item-title>
+              <v-list-item-group v-if="carrito.length">
+                <v-list-item v-for="producto in carrito" :key="producto.id">
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      <strong>Producto:</strong> {{ producto.nombre }} 
+                      <span v-if="producto.modelo_detalle && producto.modelo_detalle.nombre_modelo">
+                        {{ producto.modelo_detalle.nombre_modelo }} {{ producto.modelo_detalle.version }}
+                      </span>
+                    </v-list-item-title>
+                    <v-list-item-title>
                       <strong>Cantidad:</strong>
                       <v-btn icon @click="disminuirCantidad(producto)">
                         <v-icon>mdi-minus</v-icon>
@@ -48,17 +48,16 @@
                         <v-icon>mdi-plus</v-icon>
                       </v-btn>
                     </v-list-item-title>
-                  <v-list-item-title><strong>Precio:</strong> ${{ producto.precio }}</v-list-item-title>
+                    <v-list-item-title><strong>Precio:</strong> ${{ producto.precio }}</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+              <v-list-item v-else>
+                <v-list-item-content>
+                  <v-list-item-title>No hay productos en el carrito.</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
-            </v-list-item-group>
-            <v-list-item v-else>
-              <v-list-item-content>
-                <v-list-item-title>No hay productos en el carrito.</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-
+            </v-list>
           <v-list-item>
             <v-list-item-content>
               <v-list-item-title class="headline"><strong>Total de la Compra:</strong> ${{ totalCompra }}</v-list-item-title>
@@ -146,8 +145,8 @@ export default {
       const productosAVerificar = this.carrito.map(item => ({
         id_producto: item.id_producto,
         nombre: item.nombre,
-        nombre_modelo: item.modelo_detalle.nombre_modelo,
-        version: item.modelo_detalle.version,
+        nombre_modelo: item.modelo_detalle ? item.modelo_detalle.nombre_modelo : null, // Almacena el modelo o null
+        version: item.modelo_detalle ? item.modelo_detalle.version : null, // Almacena la versión o null
         cantidad: item.cantidad,
         stock: item.stock // Asegúrate de que este atributo esté presente en cada producto
       }));
@@ -155,7 +154,9 @@ export default {
       // Verificar el stock de cada producto
       for (const producto of productosAVerificar) {
         if (producto.cantidad > producto.stock) {
-          alert(`No hay suficiente stock para el producto: ${producto.nombre} ${producto.nombre_modelo} ${producto.version}. Solo hay ${producto.stock} disponibles.`);
+          // Construir el mensaje de alerta
+          const modeloMensaje = producto.nombre_modelo ? ` ${producto.nombre_modelo}` : ''; // Solo incluye el modelo si existe
+          alert(`No hay suficiente stock para el producto: ${producto.nombre}${modeloMensaje}. Solo hay ${producto.stock} disponibles.`);
           return false; // Detener si no hay suficiente stock
         }
       }
@@ -178,10 +179,7 @@ export default {
         this.$router.push('/');
       },
     contacto() {
-      // Lógica para contacto
-    },
-    verCarrito() {
-      // Lógica para ver el carrito
+      this.$router.push('/contacto'); // Redirige a la página de contacto
     },
     aumentarCantidad(producto) {
       this.$store.dispatch('aumentarCantidad', producto.id_producto);

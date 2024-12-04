@@ -112,7 +112,7 @@
           {{ isEditing ? 'Actualizar' : 'Registrar' }}
       </v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="grey" @click="resetRegisterForm">Cancelar</v-btn>
+        <v-btn color="grey" @click="cancelar">Cancelar</v-btn>
       </v-card-actions>
     </v-card>
     <v-footer app>
@@ -153,14 +153,18 @@ export default {
   methods: {
     registrarCliente() {
       const clienteData = this.getClienteData();
+      console.log("Datos del cliente a registrar:", clienteData); // Verifica los datos
       axios.post('http://127.0.0.1:8000/usuario/', clienteData)
         .then(() => {
           alert("CLIENTE REGISTRADO EXITOSAMENTE");
-          this.resetRegisterForm();
           this.$router.go(-1);
         })
         .catch(error => {
-          console.error("Error al añadir el cliente:", error.response.data);
+          if (error.response) {
+            console.error("Error al añadir el cliente:", error.response.data);
+          } else {
+            console.error("Error sin respuesta:", error.message);
+          }
         });
     },
     editarCliente() {
@@ -169,7 +173,6 @@ export default {
       axios.put(`http://127.0.0.1:8000/usuario/${id}/`, clienteData)
         .then(() => {
           alert("CLIENTE ACTUALIZADO EXITOSAMENTE");
-          this.resetRegisterForm();
           this.$router.go(-1);
         })
         .catch(error => {
@@ -188,17 +191,8 @@ export default {
         contraseña: this.contraseña,
       };
     },
-    resetRegisterForm() {
-      this.dni = '';
-      this.nombre = '';
-      this.apellido = '';
-      this.fecha_de_nacimiento = '';
-      this.direccion = '';
-      this.telefono = '';
-      this.email = '';
-      this.contraseña = '';
-      this.isEditing = false;
-      this.$refs.registerForm.reset();
+    cancelar() {
+      this.$router.go(-1);
     },
     inicio() {
       this.$router.push("/");

@@ -47,7 +47,11 @@
                       <v-list dense>
                         <v-list-item v-for="detalle in venta.detalles" :key="detalle.producto.id_producto">
                           <v-list-item-content>
-                            <v-list-item-title><strong>Producto:</strong> {{ detalle.producto.nombre }} {{ detalle.producto.modelo_detalle.nombre_modelo }} {{ detalle.producto.modelo_detalle.version }}</v-list-item-title>
+                            <v-list-item-title>
+                              <strong>Producto:</strong> {{ detalle.producto.nombre }} 
+                              <span v-if="detalle.producto.modelo_detalle">{{ detalle.producto.modelo_detalle.nombre_modelo }}</span>
+                              <span v-if="detalle.producto.modelo_detalle"> {{ detalle.producto.modelo_detalle.version }}</span>
+                            </v-list-item-title>
                             <v-list-item-title><strong>Cantidad:</strong> {{ detalle.cantidad }}</v-list-item-title>
                             <v-list-item-title><strong>Precio Unitario:</strong> ${{ detalle.producto.precio }}</v-list-item-title>
                           </v-list-item-content>
@@ -83,6 +87,7 @@
     </v-footer>
   </v-app>
 </template>
+
 
 <script>
 import { mapGetters } from 'vuex';
