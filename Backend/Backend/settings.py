@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-l$!h8e56dsmox!zvf@+dxp5318*nn^#u72r0havgl_i&-kawg^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -53,6 +53,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',  # Para requerir autenticación
     ],
 }
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 from datetime import timedelta
