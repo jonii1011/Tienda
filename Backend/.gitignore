@@ -1,0 +1,12 @@
+# Ignorar el entorno virtual
+myenv/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Ignorar archivos de configuración locales
+*.env
+
+# Ignorar carpetas específicas
+mi-backend-app/
