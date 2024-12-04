@@ -1,0 +1,13 @@
+# Ignorar el entorno virtual
+myenv/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Ignorar archivos de configuración locales
+*.env
+
+# Ignorar paquetes de Python y Gunicorn
+# Ajusta la ruta según sea necesario
+../myenv/
