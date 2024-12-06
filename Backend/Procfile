@@ -1,4 +1,4 @@
-web: gunicorn Backend.wsgi
+web: gunicorn wsgi
 
 
 
