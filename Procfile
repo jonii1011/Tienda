@@ -1,4 +1,5 @@
-web: uwsgi --ini Backend/uwsgi.ini
+web: gunicorn Backend.wsgi:application
+
 
 
 
