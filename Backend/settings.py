@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'tienda',
     'rest_framework_simplejwt',
     'corsheaders',
-    'tienda',
 ]
 
 REST_FRAMEWORK = {
@@ -130,7 +130,7 @@ import dj_database_url
 import os
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL', 'postgres://localhost'))
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
 }
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
