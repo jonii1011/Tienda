@@ -32,7 +32,7 @@ ALLOWED_HOSTS = [
 ]
 
 
-AUTH_USER_MODEL = 'tienda.Usuario'
+AUTH_USER_MODEL = 'backend.tienda.Usuario'
 
 # Application definition
 
