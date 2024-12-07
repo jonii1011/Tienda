@@ -118,7 +118,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 import os
-from pathlib import Path
 import dj_database_url
 
 # Configuración base del proyecto
