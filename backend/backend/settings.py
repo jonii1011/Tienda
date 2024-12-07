@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'backend.tienda',
+    'tienda',
     'rest_framework_simplejwt',
     'corsheaders',
     'whitenoise.runserver_nostatic',
