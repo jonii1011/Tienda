@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'Backend.tienda.apps.TiendaConfig',
+    'tienda',
     'rest_framework_simplejwt',
     'corsheaders',
 ]
