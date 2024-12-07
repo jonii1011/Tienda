@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-l$!h8e56dsmox!zvf@+dxp5318*nn^#u72r0havgl_i&-kawg^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['mi-backend-app.herokuapp.com']
+ALLOWED_HOSTS = ['mi-backend-app.herokuapp.com', '*'] 
 
 AUTH_USER_MODEL = 'tienda.Usuario'
 
