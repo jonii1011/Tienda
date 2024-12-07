@@ -32,7 +32,7 @@ ALLOWED_HOSTS = [
 ]
 
 
-AUTH_USER_MODEL = 'backend.tienda.Usuario'
+AUTH_USER_MODEL = 'tienda.Usuario'
 
 # Application definition
 
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'backend.tienda',
+    'tienda',
     'rest_framework_simplejwt',
     'corsheaders',
     'whitenoise.runserver_nostatic',
